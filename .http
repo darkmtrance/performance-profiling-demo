@@ -1,0 +1,13 @@
+# Iniciar sesión para un usuario
+POST http://localhost:8080/api/login/usuario1
+
+# Ejecutar una operación compleja y medir su rendimiento
+GET http://localhost:8080/api/complex-operation
+
+# Registrar una métrica personalizada
+POST http://localhost:8080/api/custom-metric/mi_metrica?value=42.5
+
+# Cerrar sesión de un usuario
+POST http://localhost:8080/api/logout/usuario1
+
+GET http://localhost:8080/actuator/prometheus
