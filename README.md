@@ -1,17 +1,51 @@
-# Sistema de Monitoreo con Gray Box Profiling
+# Demo de Monitoreo y Trazabilidad Distribuida
 
-Este proyecto es una demostración de implementación de Gray Box Profiling utilizando Spring Boot 3 y Micrometer, que nos permite obtener una visión detallada del comportamiento y rendimiento de nuestra aplicación en tiempo real.
+Este proyecto demuestra patrones y anti-patrones comunes en arquitecturas de microservicios, implementando monitoreo y trazabilidad distribuida usando Spring Boot 3.
 
-## Componentes Principales
+## 🚀 Guía Rápida
 
-### Tecnologías Utilizadas
-- Spring Boot 3.2.0
-- Micrometer (para métricas)
-- Spring Actuator
-- Prometheus Registry
-- AOP (Aspect-Oriented Programming)
+### 1. Iniciar los Servicios
+```bash
+# Iniciar Prometheus, Grafana y Zipkin
+docker compose up -d
+```
 
-### Estructura del Proyecto
+### 2. Ejecutar la Aplicación
+```bash
+./mvnw spring-boot:run
+```
+
+### 3. Probar los Ejemplos
+```bash
+# Ejecutar el script de prueba
+./test-distributed-tracing.sh
+```
+
+## 📚 Ejemplos Incluidos
+
+### 1. Patrones de Comunicación
+Ubicación: `src/main/java/com/matomaylla/demo/service/DistributedDemoService.java`
+
+#### Anti-patrón: Llamadas Secuenciales
+```java
+// Mal: Llamadas secuenciales innecesarias
+String result1 = service1Client.callService1(param);
+String result2 = service2Client.callService2(result1);
+```
+
+#### Buena Práctica: Llamadas Paralelas
+```java
+// Bien: Ejecución paralela cuando es posible
+CompletableFuture<String> future1 = CompletableFuture.supplyAsync(() -> 
+    service1Client.callService1(param)
+);
+CompletableFuture<String> future2 = CompletableFuture.supplyAsync(() -> 
+    service2Client.callService2(param)
+);
+```
+
+### 2. Monitoreo de Rendimiento
+Ubicación: `src/main/java/com/matomaylla/demo/controller/DemoController.java`
 ```
 com.matomaylla.demo/
 ├── config/
@@ -25,80 +59,97 @@ com.matomaylla.demo/
 
 ## Guía de Demostración
 
-### 1. Métricas Automáticas
-La aplicación captura automáticamente varias métricas importantes:
+## 🔍 Comparación de Patrones
 
+| Patrón | Endpoint | Descripción | Tiempo Promedio |
+|--------|----------|-------------|-----------------|
+| Secuencial | `/demo.api/distributed/sequential` | Anti-patrón: Llamadas en serie | ~350ms |
+| Paralelo | `/demo.api/distributed/parallel` | Buena práctica: Ejecución paralela | ~220ms |
+| Encadenado | `/demo.api/distributed/chained` | Anti-patrón: Cadena larga | ~580ms |
+| Reactivo | `/demo.api/distributed/reactive` | Buena práctica: WebClient reactivo | ~340ms |
+
+## 📊 Métricas Clave
+
+### Visualizar en Prometheus
 ```bash
-# Mostrar métricas del sistema
-curl http://localhost:8080/actuator/metrics
+# Tiempos de respuesta
+demo_api_login_seconds_count
+demo_api_complex_seconds_max
+
+# Errores
+demo_login_failures_total
 ```
 
-Métricas destacadas:
-- JVM metrics (memoria, threads)
-- Tomcat metrics (conexiones, pool)
-- HTTP request metrics
+### Visualizar en Zipkin
+- Trazas completas de llamadas entre servicios
+- Latencias por componente
+- Dependencias entre servicios
 
-### 2. Métricas Personalizadas
-Hemos implementado métricas específicas para el negocio:
+## 🔧 Configuración Principal
 
-#### 2.1 Contador de Usuarios Activos
-```bash
-# Verificar usuarios activos
-curl http://localhost:8080/actuator/metrics/demo.users.active
+1. **Zipkin** (`application.properties`):
+```properties
+management.tracing.sampling.probability=1.0
+management.zipkin.tracing.endpoint=http://localhost:9411/api/v2/spans
 ```
 
-#### 2.2 Monitoreo de Operaciones
-```bash
-# Ver tiempos de operaciones complejas
-curl http://localhost:8080/actuator/metrics/demo.operation.complex
+2. **Prometheus** (`prometheus/prometheus.yml`):
+```yaml
+scrape_configs:
+  - job_name: 'spring-boot-app'
+    metrics_path: '/actuator/prometheus'
 ```
 
-#### 2.3 Control de Errores
-```bash
-# Verificar fallos de login
-curl http://localhost:8080/actuator/metrics/demo.login.failures
+## 📦 Estructura del Proyecto
+
 ```
-
-### 3. Ejemplos de Uso
-
-#### 3.1 Simular Login de Usuarios
-```bash
-# Login de usuarios
-curl -X POST http://localhost:8080/api/login/usuario1
-curl -X POST http://localhost:8080/api/login/usuario2
+src/main/java/com/matomaylla/demo/
+├── controller/
+│   ├── DemoController.java           # Endpoints básicos
+│   ├── Service1Controller.java       # Primer microservicio
+│   ├── Service2Controller.java       # Segundo microservicio
+│   └── DistributedDemoController.java # Ejemplos de patrones
+├── service/
+│   ├── ComplexOperationService.java   # Lógica de negocio
+│   └── DistributedDemoService.java    # Implementación de patrones
+└── config/
+    └── TracingConfig.java            # Configuración de trazabilidad
 ```
-
-#### 3.2 Ejecutar Operación Compleja
-```bash
-# Operación con tiempo medido
-curl http://localhost:8080/api/complex-operation
-```
-
-#### 3.3 Verificar Métricas
-```bash
 # Ver todas las métricas personalizadas
 curl http://localhost:8080/actuator/prometheus | grep demo
 ```
 
-## Características Destacadas
+## 🎯 Objetivos del Proyecto
 
-### 1. Gray Box Profiling
-El sistema implementa Gray Box Profiling, proporcionando:
-- Métricas automáticas del sistema
-- Métricas personalizadas de negocio
-- Tiempos de respuesta detallados
-- Histogramas y percentiles
+1. **Demostrar Patrones y Anti-patrones**
+   - Cómo NO hacer llamadas entre servicios
+   - Mejores prácticas de implementación
 
-### 2. Monitoreo en Tiempo Real
-- Todas las métricas están disponibles en tiempo real
-- Endpoints REST para consulta de métricas
-- Formato compatible con Prometheus
+2. **Monitoreo Efectivo**
+   - Métricas relevantes
+   - Visualización en tiempo real
+   - Detección de problemas
 
-### 3. Integración con Sistemas de Monitoreo
-Las métricas están listas para ser integradas con:
-- Grafana
-- Prometheus
-- Sistemas de alertas
+3. **Trazabilidad Completa**
+   - Seguimiento de solicitudes
+   - Análisis de latencias
+   - Diagnóstico de problemas
+
+## 📝 Uso Básico
+
+1. Clonar el repositorio
+2. Iniciar servicios:
+   ```bash
+   docker compose up -d
+   ```
+3. Ejecutar la aplicación:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+4. Probar ejemplos:
+   ```bash
+   ./test-distributed-tracing.sh
+   ```
 
 ## Casos de Uso
 
