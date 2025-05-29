@@ -1,6 +1,6 @@
-# Sistema de Monitoreo con Gray Box Profiling
+# Sistema de Monitoreo con Gray Box Profiling y Distributed Tracing
 
-Este proyecto es una demostración de implementación de Gray Box Profiling utilizando Spring Boot 3 y Micrometer, que nos permite obtener una visión detallada del comportamiento y rendimiento de nuestra aplicación en tiempo real.
+Este proyecto es una demostración de implementación de Gray Box Profiling y Distributed Tracing utilizando Spring Boot 3, Micrometer, y Zipkin, que nos permite obtener una visión detallada del comportamiento, rendimiento y trazabilidad distribuida de nuestra aplicación en tiempo real.
 
 ## Componentes Principales
 
@@ -149,3 +149,78 @@ Este proyecto demuestra la implementación de un sistema de monitoreo efectivo q
 2. Ejecutar `./mvnw clean install`
 3. Iniciar la aplicación con `./mvnw spring-boot:run`
 4. Acceder a las métricas en `http://localhost:8080/actuator/metrics`
+
+## Distributed Tracing con Zipkin
+
+### 1. Configuración
+
+El proyecto utiliza Zipkin para trazabilidad distribuida:
+
+```bash
+# Iniciar los servicios (Prometheus, Grafana, y Zipkin)
+docker compose up -d
+
+# Verificar que Zipkin está corriendo
+curl http://localhost:9411/api/v2/services
+```
+
+### 2. Demostración de Patrones y Anti-patrones
+
+#### 2.1 Llamadas Secuenciales (Anti-patrón)
+```bash
+# Demostración de llamadas secuenciales
+curl http://localhost:8080/demo.api/distributed/sequential/test
+```
+
+#### 2.2 Llamadas Paralelas (Buena Práctica)
+```bash
+# Demostración de llamadas paralelas
+curl http://localhost:8080/demo.api/distributed/parallel/test
+```
+
+#### 2.3 Llamadas Encadenadas (Anti-patrón)
+```bash
+# Demostración de llamadas encadenadas
+curl http://localhost:8080/demo.api/distributed/chained/test
+```
+
+#### 2.4 Llamadas Reactivas (Buena Práctica)
+```bash
+# Demostración de llamadas reactivas
+curl http://localhost:8080/demo.api/distributed/reactive/test
+```
+
+### 3. Script de Demostración
+
+Se incluye un script para demostrar todos los patrones:
+
+```bash
+# Dar permisos de ejecución
+chmod +x test-distributed-tracing.sh
+
+# Ejecutar la demostración
+./test-distributed-tracing.sh
+```
+
+### 4. Visualización en Zipkin
+
+1. Abrir Zipkin UI: http://localhost:9411
+2. Usar la interfaz para:
+   - Ver trazas distribuidas
+   - Analizar tiempos de respuesta
+   - Identificar cuellos de botella
+   - Comparar patrones y anti-patrones
+
+### 5. Características de Trazabilidad
+
+- Muestreo configurable (actualmente 100%)
+- Propagación de contexto entre servicios
+- Medición de latencias
+- Visualización de dependencias
+
+### 6. Buenas Prácticas Implementadas
+
+1. Paralelización de llamadas independientes
+2. Uso de timeouts apropiados
+3. Manejo de errores robusto
+4. Trazabilidad completa entre servicios
